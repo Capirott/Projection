@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<script src="script.js"></script>
+<html>
+<body onload="startCanvas();">
+	<canvas id="myCanvas" width="500" height="500" style="border:1px solid #c3c3c3; float: left;">
+		Your browser does not support the canvas element.
+	</canvas><br>
+<div style="float: left; width: 300px;">
+	<fieldset>
+		<legend>Add new point</legend>
+		<label for="point">X: </label>
+		<input type="number" id="x"/><br>
+		<label for="point">Y: </label>
+		<input type="number" id="y"/><br>
+		<label for="point">Z: </label>
+		<input type="number" id="z"/><br>
+		<input type="button" value="Add new point" onclick="addPoint(parseFloat(x.value), parseFloat(y.value), parseFloat(z.value));"/>
+	</fieldset>
+	<fieldset>
+		<legend>Vertices</legend>
+		<div id="divVertices"></div>
+		<input style="float: right;" type="button" value="Delete all vertices" onclick="deleteAllVertices();"/>
+	</fieldset>
+</div>
+</body>
+</html>
