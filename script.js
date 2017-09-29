@@ -33,21 +33,10 @@ function matmult(a, b) {
     }
     return resultingArray;
 }
-window.requestAnimFrame = (function() {
-  return window.requestAnimationFrame ||
-         window.webkitRequestAnimationFrame ||
-         window.mozRequestAnimationFrame ||
-         window.oRequestAnimationFrame ||
-         window.msRequestAnimationFrame ||
-         function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
-           window.setTimeout(callback, 1000/60);
-         };
-})();
 function tick() {
 	requestAnimFrame(tick);
 	var divVertices = document.getElementById("divVertices");
 	drawScene();
-	//animate();
 }
 function drawScene() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -63,7 +52,7 @@ function drawScene() {
 }
 function startCanvas() {
 	canvas = document.getElementById("myCanvas");
-	xzPlane = [[canvas.width / 4, 0, canvas.height / 4], [canvas.width * 3.0 / 4.0, 0, canvas.height  * 3.0 / 4.0]]; 
+	xzPlane = [new vec4(canvas.width / 4, 0, canvas.height / 4), new vec4(canvas.width * 3.0 / 4.0, 0, canvas.height  * 3.0 / 4.0)]; 
 	for (var i = 0; i < xzPlane.length; ++i)
 		xzPlane[i] = isometric2D(xzPlane[i]);
 	canvas.addEventListener("mousedown", getPosition, false);
@@ -142,14 +131,12 @@ function drawLine(a, b, dash, color) {
 function drawAxis() {
 	ctx.fillStyle = "#d3d3d3";
 	ctx.beginPath();
-	
 	ctx.moveTo(xzPlane[0][0], xzPlane[0][1]);
 	ctx.lineTo(xzPlane[1][0], xzPlane[0][1]);
 	ctx.lineTo(xzPlane[1][0], xzPlane[1][1]);
 	ctx.lineTo(xzPlane[0][0], xzPlane[1][1]);
 	ctx.closePath();
 	ctx.fill();
-	
 	drawLine([0 , canvas.height / 2], [canvas.width, canvas.height / 2], [5, 3], "#0000ff");
 	drawLine([canvas.width / 2 , 0], [canvas.width / 2, canvas.height], [5, 3], "#00ff00");
 	drawLine([0 , canvas.height], [canvas.width, 0], [5, 3], "#ff0000");	
@@ -159,10 +146,19 @@ function toRadians (angle) {
 	return angle * (Math.PI / 180);
 }
 function isometric2D(vertice) {
-	var angle = 45;
+	var angle = 0;
 	var xDelta = Math.cos(toRadians(angle));
 	var yDelta = Math.sin(toRadians(angle));
-	var zDelta = 1;
+	var zDelta = 0.5;
 	return [vertice.x * xDelta + vertice.y * yDelta, vertice.x * xDelta + vertice.y * zDelta, 0.0];
 }
- 
+window.requestAnimFrame = (function() {
+  return window.requestAnimationFrame ||
+         window.webkitRequestAnimationFrame ||
+         window.mozRequestAnimationFrame ||
+         window.oRequestAnimationFrame ||
+         window.msRequestAnimationFrame ||
+         function(/* function FrameRequestCallback */ callback, /* DOMElement Element */ element) {
+           window.setTimeout(callback, 1000/60);
+         };
+})();
