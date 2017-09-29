@@ -5,15 +5,33 @@ function vec4(x, y, z, w) {
 	this.x = x;
 	this.y = y;
 	this.z = z;
-	this.w = w || 1.0;
+	this.w = w === undefined ? 1 : w;
+	this.getMat4 = function() {
+		return[
+			[this.x, 0, 0, 0],
+			[0, this.y, 0, 0],
+			[0, 0, this.z, 0],
+			[0, 0, 0, this.w]
+		]	
+	}
+	this.translate = function(x, y, z) {
+		this.x += x;
+		this.y += y;
+		this.z += z;
+	}
 }
-function mat4(x, y, z, w) {
-	this.matrix = [
-		[x, 0, 0, 0],
-		[0, y, 0, 0],
-		[0, 0, z, 0],
-		[0, 0, 0, w || 1],
-	]
+function matmult(a, b) {
+	var resultingArray = new Array();
+	for (var i = 0; i < 4; i++) {
+		resultingArray[i] = new Array();
+        for (var j = 0; j < 4; j++) {
+            resultingArray[i][j] = 0;
+            for (var k = 0; k < 4; k++) {
+                resultingArray[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+    return resultingArray;
 }
 window.requestAnimFrame = (function() {
   return window.requestAnimationFrame ||
@@ -41,7 +59,7 @@ function drawScene() {
 	var rect = canvas.getBoundingClientRect();
     var x = rect.left; // x == the location of the click in the document - the location (relative to the left) of the canvas in the document
     var y = rect.top; // y == the location of the click in the document - the location (relative to the top) of the canvas in the document
-	ctx.fillText("(" + x + ", " + y + ")" ,canvas.width - 100, canvas.height - 10);
+	//ctx.fillText("(" + x + ", " + y + ")" ,canvas.width - 100, canvas.height - 10);
 }
 function startCanvas() {
 	canvas = document.getElementById("myCanvas");
@@ -138,7 +156,7 @@ function drawAxis() {
 	
 }
 function toRadians (angle) {
-  return angle * (Math.PI / 180);
+	return angle * (Math.PI / 180);
 }
 function isometric2D(vertice) {
 	var angle = 45;
