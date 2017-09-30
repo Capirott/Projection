@@ -1,5 +1,11 @@
 var pointSize = 3; // Change according to the size of the point.
 var vertices = [];
+var isoMatrix = [
+	[0.7071, 0, 0.7071, 0], 
+	[0.4082, 0.8166, -0.4082, 0], 
+	[0, 0, 0, 0],
+	[0, 0, 0, 1]
+];
 var xzPlane;
 function vec4(x, y, z, w) {
 	this.x = x;
@@ -8,25 +14,33 @@ function vec4(x, y, z, w) {
 	this.w = w === undefined ? 1 : w;
 	this.getMat4 = function() {
 		return[
-			[this.x, 0, 0, 0],
-			[0, this.y, 0, 0],
-			[0, 0, this.z, 0],
-			[0, 0, 0, this.w]
+			[this.x],
+			[this.y],
+			[this.z],
+			[this.w]
 		]	
 	}
 	this.translate = function(x, y, z) {
 		this.x += x;
 		this.y += y;
 		this.z += z;
+		return this
+	}
+	this.copyArray = function(array) {
+		this.x = array[0];
+		this.y = array[1];
+		this.z = array[2];
+		this.w = array[3] === undefined ? 1 : array[3];
+		return this;
 	}
 }
 function matmult(a, b) {
 	var resultingArray = new Array();
-	for (var i = 0; i < 4; i++) {
+	for (var i = 0; i < a.length; i++) {
 		resultingArray[i] = new Array();
-        for (var j = 0; j < 4; j++) {
+        for (var j = 0; j < b[i].length; j++) {
             resultingArray[i][j] = 0;
-            for (var k = 0; k < 4; k++) {
+            for (var k = 0; k < a[i].length; k++) {
                 resultingArray[i][j] += a[i][k] * b[k][j];
             }
         }
@@ -52,9 +66,21 @@ function drawScene() {
 }
 function startCanvas() {
 	canvas = document.getElementById("myCanvas");
-	xzPlane = [new vec4(canvas.width / 4, 0, canvas.height / 4), new vec4(canvas.width * 3.0 / 4.0, 0, canvas.height  * 3.0 / 4.0)]; 
-	for (var i = 0; i < xzPlane.length; ++i)
+	//ctx.moveTo(xzPlane[0][0], xzPlane[0][1]);
+	//ctx.lineTo(xzPlane[1][0], xzPlane[0][1]);
+	//ctx.lineTo(xzPlane[1][0], xzPlane[1][1]);
+	//ctx.lineTo(xzPlane[0][0], xzPlane[1][1]);
+	
+	xzPlane = [
+		new vec4(canvas.width / 4, 0, canvas.height / 4),
+		new vec4(canvas.width * 3.0 / 4.0, 0, canvas.height / 4),
+		new vec4(canvas.width * 3.0 / 4.0, 0, canvas.height  * 3.0 / 4.0),		
+		new vec4(canvas.width / 4, 0, canvas.height  * 3.0 / 4.0),
+	]; 
+	for (var i = 0; i < xzPlane.length; ++i) {
 		xzPlane[i] = isometric2D(xzPlane[i]);
+		//normalize(xzPlane[i]);
+	}
 	canvas.addEventListener("mousedown", getPosition, false);
 	ctx = canvas.getContext("2d");
 	canvasWidth = canvas.width;
@@ -131,10 +157,10 @@ function drawLine(a, b, dash, color) {
 function drawAxis() {
 	ctx.fillStyle = "#d3d3d3";
 	ctx.beginPath();
-	ctx.moveTo(xzPlane[0][0], xzPlane[0][1]);
-	ctx.lineTo(xzPlane[1][0], xzPlane[0][1]);
-	ctx.lineTo(xzPlane[1][0], xzPlane[1][1]);
-	ctx.lineTo(xzPlane[0][0], xzPlane[1][1]);
+	ctx.moveTo(xzPlane[0].x, xzPlane[0].y);
+	ctx.lineTo(xzPlane[1].x, xzPlane[1].y);
+	ctx.lineTo(xzPlane[2].x, xzPlane[2].y);
+	ctx.lineTo(xzPlane[3].x, xzPlane[3].y);
 	ctx.closePath();
 	ctx.fill();
 	drawLine([0 , canvas.height / 2], [canvas.width, canvas.height / 2], [5, 3], "#0000ff");
@@ -146,11 +172,8 @@ function toRadians (angle) {
 	return angle * (Math.PI / 180);
 }
 function isometric2D(vertice) {
-	var angle = 0;
-	var xDelta = Math.cos(toRadians(angle));
-	var yDelta = Math.sin(toRadians(angle));
-	var zDelta = 0.5;
-	return [vertice.x * xDelta + vertice.y * yDelta, vertice.x * xDelta + vertice.y * zDelta, 0.0];
+	//return new vec4((vertice.x - vertice.z) * Math.cos(toRadians(30)), 1.0/2 * (vertice.x + vertice.z) + vertice.y, 0);
+	return (new vec4()).copyArray(matmult(isoMatrix, vertice.getMat4()));
 }
 window.requestAnimFrame = (function() {
   return window.requestAnimationFrame ||
