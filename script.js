@@ -1,5 +1,9 @@
 var pointSize = 3; // Change according to the size of the point.
 var vertices = [];
+var edges = [];
+var xAxis = [];
+var yAxis = [];
+var zAxis = [];
 var isoMatrix = [
 	[0.7071, 0, 0.7071, 0], 
 	[0.4082, 0.8166, -0.4082, 0], 
@@ -27,10 +31,16 @@ function vec4(x, y, z, w) {
 		return this
 	}
 	this.copyArray = function(array) {
-		this.x = array[0];
-		this.y = array[1];
-		this.z = array[2];
-		this.w = array[3] === undefined ? 1 : array[3];
+		this.x = array[0][0];
+		this.y = array[1][0];
+		this.z = array[2][0];
+		this.w = array[3][0] === undefined ? 1 : array[3][0];
+		return this;
+	}
+	this.scale = function(vec) {
+		this.x *= vec.x;
+		this.y *= vec.y;
+		this.z *= vec.z;
 		return this;
 	}
 }
@@ -54,9 +64,13 @@ function tick() {
 }
 function drawScene() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	drawAxis();
+	drawPlane();
+	drawAxis();	
+	for (var i = 0; i < edges.length; ++i) {
+		drawEdge(edges[i]);
+	}
 	for (var i = 0; i < vertices.length; ++i) {
-		drawCoordinates(vertices[i]);
+		drawCoordinates(isometric2D(vertices[i]), i);
 	}
 	ctx.font = "30px Arial";
 	var rect = canvas.getBoundingClientRect();
@@ -66,21 +80,33 @@ function drawScene() {
 }
 function startCanvas() {
 	canvas = document.getElementById("myCanvas");
-	//ctx.moveTo(xzPlane[0][0], xzPlane[0][1]);
-	//ctx.lineTo(xzPlane[1][0], xzPlane[0][1]);
-	//ctx.lineTo(xzPlane[1][0], xzPlane[1][1]);
-	//ctx.lineTo(xzPlane[0][0], xzPlane[1][1]);
-	
+	var planeScale = new vec4(200, 200, 200);
 	xzPlane = [
-		new vec4(canvas.width / 4, 0, canvas.height / 4),
-		new vec4(canvas.width * 3.0 / 4.0, 0, canvas.height / 4),
-		new vec4(canvas.width * 3.0 / 4.0, 0, canvas.height  * 3.0 / 4.0),		
-		new vec4(canvas.width / 4, 0, canvas.height  * 3.0 / 4.0),
-	]; 
-	for (var i = 0; i < xzPlane.length; ++i) {
-		xzPlane[i] = isometric2D(xzPlane[i]);
-		//normalize(xzPlane[i]);
+		normalize(isometric2D((new vec4(-1, 0, -1)).scale(planeScale))),
+		normalize(isometric2D((new vec4(1, 0, -1)).scale(planeScale))),
+		normalize(isometric2D((new vec4(1, 0, 1)).scale(planeScale))),
+		normalize(isometric2D((new vec4(-1, 0, 1)).scale(planeScale))),
+	];
+	var vert = [new vec4(0, 100, 0), new vec4(0, 0, 0), new vec4(100, 0, 0), new vec4(100, 0, 100), new vec4(0, 0, 100), new vec4(0, 100, 100), new vec4(100, 100, 100), new vec4(100, 100, 0)];
+	var ed = [[ 0, 7], [ 1, 4], [ 6, 7], [ 3, 4], [ 0, 5], [ 6, 5], [ 4, 5], [ 0, 1], [ 6, 3], [1, 2], [3, 2]];
+	for (var i = 0; i < vert.length; ++i) {
+		addVertice(vert[i]);
 	}
+	for (var i = 0; i < ed.length; ++i) {
+		addEdge(ed[i][0], ed[i][1]);
+	}
+	xAxis = [
+		normalize(isometric2D(new vec4(-canvas.width / 2, 0, 0))),
+		normalize(isometric2D(new vec4(canvas.width / 2, 0, 0)))		
+	];
+	yAxis = [
+		normalize(isometric2D(new vec4(0, -canvas.width / 2, 0))),
+		normalize(isometric2D(new vec4(0, canvas.width / 2, 0)))
+	];
+	zAxis = [
+		normalize(isometric2D(new vec4(0, 0, -canvas.width / 2))),
+		normalize(isometric2D(new vec4(0, 0, canvas.width / 2)))
+	];
 	canvas.addEventListener("mousedown", getPosition, false);
 	ctx = canvas.getContext("2d");
 	canvasWidth = canvas.width;
@@ -88,15 +114,14 @@ function startCanvas() {
 	canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 	tick();
 }
-function addPoint(x, y, z, norm) {
-	var vertice = new vec4(x, y, z);
+function addVertice(vec4, norm) {
+	var vertice = vec4;
 	if (norm == true)
-		normalize(vertice);
+		vertice = worldCoordinates(vertice);
 	var verticeStatus = validateVertice(vertice);
 	if (verticeStatus == 1) {
 		vertices.push(vertice);
-		drawCoordinates(vertice);
-		divVertices.innerHTML += "( " + vertice.x + ", " + vertice.y + ", " + vertice.z + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deletePoint(" + (vertices.length - 1) + ")\"/><br>";
+		divVertices.innerHTML += (vertices.length - 1) + ": ( " + vertice.x + ", " + vertice.y + ", " + vertice.z + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deletePoint(" + (vertices.length - 1) + ")\"/><br>";
 	} else {
 		if (verticeStatus == 0) {
 			alert("This vertice already exists!");
@@ -104,18 +129,56 @@ function addPoint(x, y, z, norm) {
 			alert("Invalid input!");	
 		}
 	}
+	document.getElementById("x").select();
+}
+function validadeEdges(edge) {
+	if (isNaN(edge[0]) || isNaN(edge[1]) || edge[0] == edge[1] || vertices[edge[0]] == undefined ||  vertices[edge[1]] == undefined) {
+		return -1;
+	}
+	for (var i = 0; i < edges.length; i++) {
+		if (edges[i][0] == edge[0] && edges[i][1] == edge[1] || edges[i][1] == edge[0] && edges[i][0] == edge[1]){
+			return 0;
+		}
+	}
+	return 1;
+}
+function addEdge(vA, vB) {
+	var edge = [vA, vB];
+	var edgeStatus = validadeEdges(edge);
+	if (edgeStatus == 1) {
+		edges.push(edge);		
+		divEdges.innerHTML += (edges.length - 1) + ": (" + edge[0] + ", " + edge[1] + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deleteEdge(" + (edges.length - 1) + ")\"/><br>";
+	} else {
+		if (edgeStatus == 0) {
+			alert("This edge already exists!");
+		} else {
+			alert("Invalid input!");	
+		}
+	}
+	document.getElementById("vA").select();
+}
+function deleteEdge(index) {
+	edges.splice(index, 1);
+	divEdges.innerHTML = "";
+	for (var i = 0; i < edges.length; ++i) {
+		divEdges.innerHTML += (i) + ": (" + edges[i][0] + ", " + edges[i][1] + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deleteEdge(" + (edges.length - 1) + ")\"/><br>";
+	}
+}
+function deleteAllEdges() {
+	edges = [];
+	divEdges.innerHTML = "";
 }
 function deletePoint(index) {
 	vertices.splice(index, 1);
 	divVertices.innerHTML = "";
 	for (var i = 0; i < vertices.length; ++i) {
-		divVertices.innerHTML += "( " + vertices[i].x + ", " + vertices[i].y + ", " + vertices[i].z + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deletePoint(" + i + ")\"/><br>";
+		divVertices.innerHTML += i + ": ( " + vertices[i].x + ", " + vertices[i].y + ", " + vertices[i].z + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deletePoint(" + i + ")\"/><br>";
 	}
 }
 function deleteAllVertices() {
 	vertices = [];
 	divVertices.innerHTML = "";
-
+	deleteAllEdges();
 }
 function validateVertice(vertice) {
 	if (isNaN(vertice.x) || isNaN(vertice.y) || isNaN(vertice.z)) {
@@ -132,29 +195,34 @@ function getPosition(event){
     var rect = canvas.getBoundingClientRect();
     var x = event.clientX - rect.left; // x == the location of the click in the document - the location (relative to the left) of the canvas in the document
     var y = event.clientY - rect.top; // y == the location of the click in the document - the location (relative to the top) of the canvas in the document
-    var z = 0;
-	addPoint(x, y, z, true);
+    addVertice(new vec4(x, y, 0), true);
 }
-function drawCoordinates(vertice){    
+function drawCoordinates(vertice, i){    
     ctx.fillStyle = "#000000"; 
-    ctx.beginPath(); //Start path
-    ctx.arc(vertice.x + canvas.width / 2 ,  canvas.height / 2 - vertice.y, pointSize, 0, Math.PI * 2, true); // Draw a point using the arc function of the canvas with a point structure.
-    ctx.fill(); // Close the path and fill.
+    ctx.beginPath(); 
+	var pixelVertice = normalize(vertice);
+    ctx.arc(pixelVertice.x, pixelVertice.y, pointSize, 0, Math.PI * 2, true); 
+	ctx.font = "10px Arial";
+	ctx.fillText(i, pixelVertice.x + 10, pixelVertice.y);
+    ctx.fill(); 
+	ctx.closePath(); 
 }
-function normalize(worldCoordenate) {
-	worldCoordenate.x = worldCoordenate.x - canvas.width / 2;
-	worldCoordenate.y = canvas.height / 2 - worldCoordenate.y;
+function normalize(worldCoordinates) {
+	return new vec4(worldCoordinates.x + canvas.width / 2,  canvas.height / 2 - worldCoordinates.y, pointSize, 0);
+}
+function worldCoordinates(vertice) {
+	return new vec4(vertice.x - canvas.width / 2, canvas.height / 2 - vertice.y, 0);
 }
 function drawLine(a, b, dash, color) {
 	ctx.beginPath();
 	ctx.strokeStyle = color;
 	ctx.setLineDash(dash);
-	ctx.moveTo(a[0], a[1]);
-	ctx.lineTo(b[0], b[1]);
+	ctx.moveTo(a.x, a.y);
+	ctx.lineTo(b.x, b.y);
 	ctx.stroke();
 	ctx.closePath();
 }
-function drawAxis() {
+function drawPlane() {
 	ctx.fillStyle = "#d3d3d3";
 	ctx.beginPath();
 	ctx.moveTo(xzPlane[0].x, xzPlane[0].y);
@@ -163,16 +231,21 @@ function drawAxis() {
 	ctx.lineTo(xzPlane[3].x, xzPlane[3].y);
 	ctx.closePath();
 	ctx.fill();
-	drawLine([0 , canvas.height / 2], [canvas.width, canvas.height / 2], [5, 3], "#0000ff");
-	drawLine([canvas.width / 2 , 0], [canvas.width / 2, canvas.height], [5, 3], "#00ff00");
-	drawLine([0 , canvas.height], [canvas.width, 0], [5, 3], "#ff0000");	
-	
+}
+function drawEdge(edge) {
+	var vertA = normalize(isometric2D(vertices[edge[0]]));
+	var vertB = normalize(isometric2D(vertices[edge[1]]));
+	drawLine(vertA, vertB, [], "#000000");
+}
+function drawAxis() {
+	drawLine(xAxis[0], xAxis[1], [5, 3], "#0000ff");
+	drawLine(yAxis[0], yAxis[1], [5, 3], "#00ff00");
+	drawLine(zAxis[0], zAxis[1], [5, 3], "#ff0000");		
 }
 function toRadians (angle) {
 	return angle * (Math.PI / 180);
 }
 function isometric2D(vertice) {
-	//return new vec4((vertice.x - vertice.z) * Math.cos(toRadians(30)), 1.0/2 * (vertice.x + vertice.z) + vertice.y, 0);
 	return (new vec4()).copyArray(matmult(isoMatrix, vertice.getMat4()));
 }
 window.requestAnimFrame = (function() {
