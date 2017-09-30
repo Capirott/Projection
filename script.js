@@ -59,7 +59,6 @@ function matmult(a, b) {
 }
 function tick() {
 	requestAnimFrame(tick);
-	var divVertices = document.getElementById("divVertices");
 	drawScene();
 }
 function drawScene() {
@@ -81,6 +80,7 @@ function drawScene() {
 function startCanvas() {
 	canvas = document.getElementById("myCanvas");
 	var planeScale = new vec4(200, 200, 200);
+	var divVertices = document.getElementById("divVertices");
 	xzPlane = [
 		normalize(isometric2D((new vec4(-1, 0, -1)).scale(planeScale))),
 		normalize(isometric2D((new vec4(1, 0, -1)).scale(planeScale))),
