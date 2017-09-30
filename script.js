@@ -59,7 +59,6 @@ function matmult(a, b) {
 }
 function tick() {
 	requestAnimFrame(tick);
-	var divVertices = document.getElementById("divVertices");
 	drawScene();
 }
 function drawScene() {
@@ -81,6 +80,7 @@ function drawScene() {
 function startCanvas() {
 	canvas = document.getElementById("myCanvas");
 	var planeScale = new vec4(200, 200, 200);
+	var divVertices = document.getElementById("divVertices");
 	xzPlane = [
 		normalize(isometric2D((new vec4(-1, 0, -1)).scale(planeScale))),
 		normalize(isometric2D((new vec4(1, 0, -1)).scale(planeScale))),
@@ -88,7 +88,7 @@ function startCanvas() {
 		normalize(isometric2D((new vec4(-1, 0, 1)).scale(planeScale))),
 	];
 	var vert = [new vec4(0, 100, 0), new vec4(0, 0, 0), new vec4(100, 0, 0), new vec4(100, 0, 100), new vec4(0, 0, 100), new vec4(0, 100, 100), new vec4(100, 100, 100), new vec4(100, 100, 0)];
-	var ed = [[ 0, 7], [ 1, 4], [ 6, 7], [ 3, 4], [ 0, 5], [ 6, 5], [ 4, 5], [ 0, 1], [ 6, 3], [1, 2], [3, 2]];
+	var ed = [[ 0, 7], [ 1, 4], [ 6, 7], [ 3, 4], [ 0, 5], [ 6, 5], [ 4, 5], [ 0, 1], [ 6, 3], [1, 2], [3, 2], [7, 2]];
 	for (var i = 0; i < vert.length; ++i) {
 		addVertice(vert[i]);
 	}
