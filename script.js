@@ -4,12 +4,7 @@ var edges = [];
 var xAxis = [];
 var yAxis = [];
 var zAxis = [];
-var isoMatrix = [
-	[0.7071, 0, 0.7071, 0], 
-	[0.4082, 0.8166, -0.4082, 0], 
-	[0, 0, 0, 0],
-	[0, 0, 0, 1]
-];
+
 var rotX = angle => { 
 		return 	[
 						[1, 0, 0, 0], 
@@ -34,6 +29,15 @@ var rotZ = angle => {
 						[0, 0, 0, 1]
 				]; 
 };
+var ortProjXY = [
+	[1, 0, 0, 0],
+	[0, 1, 0, 0],
+	[0, 0, 0, 0],
+	[0, 0, 0, 1]
+]
+var isoMatrix = matmult(ortProjXY, matmult(rotX(35.26439),  rotY(45)));
+var dimMatrix = matmult(ortProjXY, matmult(rotX(20.705),  rotY(22.208)));
+var triMatrix = matmult(ortProjXY, matmult(rotX(45),  rotY(30)));
 var xzPlane;
 function vec4(x, y, z, w) {
 	this.x = x;
@@ -111,7 +115,7 @@ function drawScene() {
 		drawEdge(edges[i]);
 	}
 	for (var i = 0; i < vertices.length; ++i) {
-		drawCoordinates(isometric2D(vertices[i]), i);
+		drawCoordinates(calcProjection(vertices[i]), i);
 	}
 	ctx.font = "30px Arial";
 	var rect = canvas.getBoundingClientRect();
@@ -124,10 +128,10 @@ function startCanvas() {
 	var planeScale = new vec4(200, 200, 200);
 	var divVertices = $("divVertices");
 	xzPlane = [
-		normalize(isometric2D((new vec4(-1, 0, -1)).scale(planeScale))),
-		normalize(isometric2D((new vec4(1, 0, -1)).scale(planeScale))),
-		normalize(isometric2D((new vec4(1, 0, 1)).scale(planeScale))),
-		normalize(isometric2D((new vec4(-1, 0, 1)).scale(planeScale))),
+		(new vec4(-1, 0, -1)).scale(planeScale),
+		(new vec4(1, 0, -1)).scale(planeScale),
+		(new vec4(1, 0, 1)).scale(planeScale),
+		(new vec4(-1, 0, 1)).scale(planeScale),
 	];
 	var vert = [new vec4(0, 100, 0), new vec4(0, 0, 0), new vec4(100, 0, 0), new vec4(100, 0, 100), new vec4(0, 0, 100), new vec4(0, 100, 100), new vec4(100, 100, 100), new vec4(100, 100, 0)];
 	var ed = [[ 0, 7], [ 1, 4], [ 6, 7], [ 3, 4], [ 0, 5], [ 6, 5], [ 4, 5], [ 0, 1], [ 6, 3], [1, 2], [3, 2], [7, 2]];
@@ -139,16 +143,16 @@ function startCanvas() {
 	}
 	$("x").select();
 	xAxis = [
-		normalize(isometric2D(new vec4(-canvas.width / 2, 0, 0))),
-		normalize(isometric2D(new vec4(canvas.width / 2, 0, 0)))		
+		new vec4(-canvas.width / 2, 0, 0),
+		new vec4(canvas.width / 2, 0, 0)		
 	];
 	yAxis = [
-		normalize(isometric2D(new vec4(0, -canvas.width / 2, 0))),
-		normalize(isometric2D(new vec4(0, canvas.width / 2, 0)))
+		new vec4(0, -canvas.width / 2, 0),
+		new vec4(0, canvas.width / 2, 0)
 	];
 	zAxis = [
-		normalize(isometric2D(new vec4(0, 0, -canvas.width / 2))),
-		normalize(isometric2D(new vec4(0, 0, canvas.width / 2)))
+		new vec4(0, 0, -canvas.width / 2),
+		new vec4(0, 0, canvas.width / 2)
 	];
 	canvas.addEventListener("mousedown", getPosition, false);
 	ctx = canvas.getContext("2d");
@@ -293,38 +297,50 @@ function worldCoordinates(vertice) {
 }
 function drawLine(a, b, dash, color) {
 	ctx.beginPath();
-	ctx.strokeStyle = color;
+	ctx.strokeStyle = color;	
 	ctx.setLineDash(dash);
 	ctx.moveTo(a.x, a.y);
 	ctx.lineTo(b.x, b.y);
 	ctx.stroke();
 	ctx.closePath();
 }
+function calcProjection(ver) {
+	var projMatrix;
+	if ($("iso").checked) {
+		projMatrix = isoMatrix
+	} else if ($("dim").checked) {
+		projMatrix = dimMatrix
+	} else if ($("tri").checked) {
+		projMatrix = triMatrix
+	}
+	return (new vec4()).copyArray(matmult(projMatrix, ver.getMat4()));
+}
 function drawPlane() {
+	var tmp = [];
+	for (var i = 0; i < xzPlane.length; ++i) {
+		tmp[i] = normalize(calcProjection(xzPlane[i])); 
+	}
 	ctx.fillStyle = "#d3d3d3";
 	ctx.beginPath();
-	ctx.moveTo(xzPlane[0].x, xzPlane[0].y);
-	ctx.lineTo(xzPlane[1].x, xzPlane[1].y);
-	ctx.lineTo(xzPlane[2].x, xzPlane[2].y);
-	ctx.lineTo(xzPlane[3].x, xzPlane[3].y);
+	ctx.moveTo(tmp[0].x, tmp[0].y);
+	ctx.lineTo(tmp[1].x, tmp[1].y);
+	ctx.lineTo(tmp[2].x, tmp[2].y);
+	ctx.lineTo(tmp[3].x, tmp[3].y);
 	ctx.closePath();
 	ctx.fill();
 }
 function drawEdge(edge) {
-	var vertA = normalize(isometric2D(vertices[edge[0]]));
-	var vertB = normalize(isometric2D(vertices[edge[1]]));
+	var vertA = normalize(calcProjection(vertices[edge[0]]));
+	var vertB = normalize(calcProjection(vertices[edge[1]]));
 	drawLine(vertA, vertB, [], "#000000");
 }
 function drawAxis() {
-	drawLine(xAxis[0], xAxis[1], [5, 3], "#0000ff");
-	drawLine(yAxis[0], yAxis[1], [5, 3], "#00ff00");
-	drawLine(zAxis[0], zAxis[1], [5, 3], "#ff0000");		
+	drawLine(normalize(calcProjection(xAxis[0])), normalize(calcProjection(xAxis[1])), [5, 3], "#0000ff");
+	drawLine(normalize(calcProjection(yAxis[0])), normalize(calcProjection(yAxis[1])), [5, 3], "#00ff00");
+	drawLine(normalize(calcProjection(zAxis[0])), normalize(calcProjection(zAxis[1])), [5, 3], "#ff0000");		
 }
 function toRadians (angle) {
 	return angle * (Math.PI / 180);
-}
-function isometric2D(vertice) {
-	return (new vec4()).copyArray(matmult(isoMatrix, vertice.getMat4()));
 }
 window.requestAnimFrame = (function() {
   return window.requestAnimationFrame ||
