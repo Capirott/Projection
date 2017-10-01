@@ -137,6 +137,7 @@ function startCanvas() {
 	for (var i = 0; i < ed.length; ++i) {
 		addEdge(ed[i][0], ed[i][1]);
 	}
+	$("x").select();
 	xAxis = [
 		normalize(isometric2D(new vec4(-canvas.width / 2, 0, 0))),
 		normalize(isometric2D(new vec4(canvas.width / 2, 0, 0)))		
