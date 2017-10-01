@@ -39,5 +39,38 @@
 		<input style="float: right;" type="button" value="Delete all edges" onclick="deleteAllEdges();"/>
 	</fieldset>
 </div>
+<div style="float: right; width: 300px;">
+	<fieldset>
+		<legend>Transformations</legend>
+		<fieldset> 
+			<legend>Anchor point rotations</legend>
+			<label for="point">X: </label>
+			<input type="number" id="xA"/><br>
+			<label for="point">Y: </label>
+			<input type="number" id="yA"/><br>
+			<label for="point">Z: </label>
+			<input type="number" id="zA"/><br>
+		</fieldset>
+		<fieldset> 
+			<legend>Operation Values</legend>
+			<label for="point">X: </label>
+			<input type="number" id="xT"/><br>
+			<label for="point">Y: </label>
+			<input type="number" id="yT"/><br>
+			<label for="point">Z: </label>
+			<input type="number" id="zT"/><br>
+		</fieldset>
+		<input type="button" value="Rotate" onclick="execOp(1);"/>
+		<input type="button" value="Translate" onclick="execOp(2);"/>
+		<input type="button" value="Scale" onclick="execOp(3);"/>
+		<input type="button" value="Negative" onclick="execOp(4);"/><br>
+		<label for="rotate">Rotate?</label><input type="checkbox" id="rotate"/>
+	</fieldset>
+	<fieldset>
+		<legend>Edges</legend>
+		<div id="divEdges"></div>
+		<input style="float: right;" type="button" value="Delete all edges" onclick="deleteAllEdges();"/>
+	</fieldset>
+</div>
 </body>
 </html>

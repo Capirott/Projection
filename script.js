@@ -10,6 +10,30 @@ var isoMatrix = [
 	[0, 0, 0, 0],
 	[0, 0, 0, 1]
 ];
+var rotX = angle => { 
+		return 	[
+						[1, 0, 0, 0], 
+						[0, Math.cos(toRadians(angle)), -Math.sin(toRadians(angle)), 0],
+						[0, Math.sin(toRadians(angle)), Math.cos(toRadians(angle)), 0],
+						[0, 0, 0, 1]
+				]; 
+};
+var rotY = angle => { 
+		return 	[
+						[Math.cos(toRadians(angle)), 0, Math.sin(toRadians(angle)), 0], 
+						[0, 1, 0, 0],
+						[-Math.sin(toRadians(angle)), 0, Math.cos(toRadians(angle)), 0],
+						[0, 0, 0, 1]
+				]; 
+};
+var rotZ = angle => { 
+		return 	[
+						[Math.cos(toRadians(angle)), -Math.sin(toRadians(angle)), 0, 0], 
+						[Math.sin(toRadians(angle)), Math.cos(toRadians(angle)), 0, 0],
+						[0, 0, 1, 0],
+						[0, 0, 0, 1]
+				]; 
+};
 var xzPlane;
 function vec4(x, y, z, w) {
 	this.x = x;
@@ -24,11 +48,8 @@ function vec4(x, y, z, w) {
 			[this.w]
 		]	
 	}
-	this.translate = function(x, y, z) {
-		this.x += x;
-		this.y += y;
-		this.z += z;
-		return this
+	this.translate = function(vec) {
+		return new vec4(this.x + vec.x, this.y + vec.y, this.z + vec.z);		
 	}
 	this.copyArray = function(array) {
 		this.x = array[0][0];
@@ -38,10 +59,17 @@ function vec4(x, y, z, w) {
 		return this;
 	}
 	this.scale = function(vec) {
-		this.x *= vec.x;
-		this.y *= vec.y;
-		this.z *= vec.z;
-		return this;
+		return new vec4(this.x * vec.x, this.y * vec.y, this.z * vec.z);		
+	}
+	this.rotate = function(vec, vect) {
+		var rotXX = rotX(vec.x);
+		var rotYY = rotY(vec.y);
+		var rotZZ = rotZ(vec.z);
+		var rotRet = this.translate(new vec4(-vect.x, -vect.y, -vect.z));
+		rotRet.copyArray(matmult(rotXX, rotRet.getMat4()));
+		rotRet.copyArray(matmult(rotYY, rotRet.getMat4()));
+		rotRet.copyArray(matmult(rotZZ, rotRet.getMat4()));
+		return rotRet.translate(vect);
 	}
 }
 function matmult(a, b) {
@@ -59,7 +87,21 @@ function matmult(a, b) {
 }
 function tick() {
 	requestAnimFrame(tick);
+	update();
 	drawScene();
+}
+function update() {
+	if ($("rotate").checked) {
+		var vecT = new vec4(parseFloat($("xT").value), parseFloat($("yT").value), parseFloat($("zT").value));
+		if (!(isNaN(vecT.x) || isNaN(vecT.y) || isNaN(vecT.z))){
+			var vecA = new vec4(parseFloat($("xA").value), parseFloat($("yA").value), parseFloat($("zA").value));
+			if (!(isNaN(vecA.x) || isNaN(vecA.y) || isNaN(vecA.z))){
+				for (var i = 0; i < vertices.length; ++i) {
+					vertices[i] = vertices[i].rotate(vecT, vecA);
+				}				
+			}		
+		}
+	}
 }
 function drawScene() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -78,9 +120,9 @@ function drawScene() {
 	//ctx.fillText("(" + x + ", " + y + ")" ,canvas.width - 100, canvas.height - 10);
 }
 function startCanvas() {
-	canvas = document.getElementById("myCanvas");
+	canvas = $("myCanvas");
 	var planeScale = new vec4(200, 200, 200);
-	var divVertices = document.getElementById("divVertices");
+	var divVertices = $("divVertices");
 	xzPlane = [
 		normalize(isometric2D((new vec4(-1, 0, -1)).scale(planeScale))),
 		normalize(isometric2D((new vec4(1, 0, -1)).scale(planeScale))),
@@ -129,7 +171,7 @@ function addVertice(vec4, norm) {
 			alert("Invalid input!");	
 		}
 	}
-	document.getElementById("x").select();
+	$("x").select();
 }
 function validadeEdges(edge) {
 	if (isNaN(edge[0]) || isNaN(edge[1]) || edge[0] == edge[1] || vertices[edge[0]] == undefined ||  vertices[edge[1]] == undefined) {
@@ -155,7 +197,7 @@ function addEdge(vA, vB) {
 			alert("Invalid input!");	
 		}
 	}
-	document.getElementById("vA").select();
+	$("vA").select();
 }
 function deleteEdge(index) {
 	edges.splice(index, 1);
@@ -190,6 +232,41 @@ function validateVertice(vertice) {
 		}
 	}
 	return 1;
+}
+function execOp(op) {
+	var vecT = new vec4(parseFloat($("xT").value), parseFloat($("yT").value), parseFloat($("zT").value));
+	if (isNaN(vecT.x) || isNaN(vecT.y) || isNaN(vecT.z)){
+		alert("The transformation input cannot be empty!");
+		return;
+	}
+	switch (op) {
+		case 1:
+			var vecA = new vec4(parseFloat($("xA").value), parseFloat($("yA").value), parseFloat($("zA").value));
+			if (isNaN(vecA.x) || isNaN(vecA.y) || isNaN(vecA.z)){
+				alert("The anchor vertice cannot have empty values!");
+				return;
+			}
+			for (var i = 0; i < vertices.length; ++i) {
+				vertices[i] = vertices[i].rotate(vecT, vecA);
+			}
+			break;
+		case 2:
+			for (var i = 0; i < vertices.length; ++i) {
+				vertices[i] = vertices[i].translate(vecT);
+			}
+			break;
+		case 3:
+			for (var i = 0; i < vertices.length; ++i) {
+				vertices[i] = vertices[i].scale(vecT);
+			}
+			break;
+		case 4:
+			$("xT").value = parseFloat($("xT").value) * -1;
+			$("yT").value = parseFloat($("yT").value) * -1;
+			$("zT").value =  parseFloat($("zT").value) * -1;
+			break;
+	
+	}
 }
 function getPosition(event){
     var rect = canvas.getBoundingClientRect();
@@ -258,3 +335,6 @@ window.requestAnimFrame = (function() {
            window.setTimeout(callback, 1000/60);
          };
 })();
+function $(element) {
+	return document.getElementById(element);
+}
