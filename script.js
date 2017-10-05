@@ -5,36 +5,80 @@ var xAxis = [];
 var yAxis = [];
 var zAxis = [];
 
-var rotX = angle => { 
+var tranMatrix = (x, y, z) => {
+	return [
+		[1, 0, 0, x],
+		[0, 1, 0, y],
+		[0, 0, 1, z],
+		[0, 0, 0, 1]
+	]
+};
+var rotX = angle => {
 		return 	[
-						[1, 0, 0, 0], 
+						[1.0, 0, 0, 0],
 						[0, Math.cos(toRadians(angle)), -Math.sin(toRadians(angle)), 0],
 						[0, Math.sin(toRadians(angle)), Math.cos(toRadians(angle)), 0],
-						[0, 0, 0, 1]
-				]; 
+						[0, 0, 0, 1.0]
+				];
 };
-var rotY = angle => { 
+var rotY = angle => {
 		return 	[
-						[Math.cos(toRadians(angle)), 0, Math.sin(toRadians(angle)), 0], 
-						[0, 1, 0, 0],
+						[Math.cos(toRadians(angle)), 0, Math.sin(toRadians(angle)), 0],
+						[0, 1.0, 0, 0],
 						[-Math.sin(toRadians(angle)), 0, Math.cos(toRadians(angle)), 0],
-						[0, 0, 0, 1]
-				]; 
+						[0, 0, 0, 1.0]
+				];
 };
-var rotZ = angle => { 
+var rotZ = angle => {
 		return 	[
-						[Math.cos(toRadians(angle)), -Math.sin(toRadians(angle)), 0, 0], 
+						[Math.cos(toRadians(angle)), -Math.sin(toRadians(angle)), 0, 0],
 						[Math.sin(toRadians(angle)), Math.cos(toRadians(angle)), 0, 0],
 						[0, 0, 1, 0],
 						[0, 0, 0, 1]
-				]; 
+				];
 };
 var ortProjXY = [
 	[1, 0, 0, 0],
 	[0, 1, 0, 0],
 	[0, 0, 0, 0],
 	[0, 0, 0, 1]
-]
+];
+var ortProjXZ = [
+	[1, 0, 0, 0],
+	[0, 0, 0, 0],
+	[0, 0, 1, 0],
+	[0, 0, 0, 1]
+];
+var ortProjYZ = [
+	[0, 0, 0, 0],
+	[0, 1, 0, 0],
+	[0, 0, 1, 0],
+	[0, 0, 0, 1]
+];
+var perX = (dx, dy, dz, id) => {
+		return 	[
+						[id, 0, 0, Math.abs(dx)],
+						[0, 1, 0, 0],
+						[0, 0, 1, 0],
+						[0, dy, dz, 1.0]
+				];
+};
+var perY = (dx, dy, dz, id) => {
+		return 	[
+						[1.0, 0, 0, 0],
+						[0, id, 0, Math.abs(dy)],
+						[0, 0, 1, 0],
+						[dx, 0, dz, 1.0]
+				];
+};
+var perZ = (dx, dy, dz, id) => {
+		return 	[
+						[1.0, 0, 0, 0],
+						[0, 1.0, 0, 0],
+						[0, 0, id, Math.abs(dz)],
+						[dx, dy, 0, 1.0]
+				];
+};
 var isoMatrix = matmult(ortProjXY, matmult(rotX(35.26439),  rotY(45)));
 var dimMatrix = matmult(ortProjXY, matmult(rotX(20.705),  rotY(22.208)));
 var triMatrix = matmult(ortProjXY, matmult(rotX(45),  rotY(30)));
@@ -50,10 +94,13 @@ function vec4(x, y, z, w) {
 			[this.y],
 			[this.z],
 			[this.w]
-		]	
+		]
+	}
+	this.getVec4 = function() {
+		return[[this.x ,this.y, this.z , this.w]]
 	}
 	this.translate = function(vec) {
-		return new vec4(this.x + vec.x, this.y + vec.y, this.z + vec.z);		
+		return new vec4(this.x + vec.x, this.y + vec.y, this.z + vec.z);
 	}
 	this.copyArray = function(array) {
 		this.x = array[0][0];
@@ -62,8 +109,15 @@ function vec4(x, y, z, w) {
 		this.w = array[3][0] === undefined ? 1 : array[3][0];
 		return this;
 	}
+	this.copyVec = function(array) {
+		this.x = array[0][0];
+		this.y = array[0][1];
+		this.z = array[0][2];
+		this.w = array[0][3];
+		return this;
+	}
 	this.scale = function(vec) {
-		return new vec4(this.x * vec.x, this.y * vec.y, this.z * vec.z);		
+		return new vec4(this.x * vec.x, this.y * vec.y, this.z * vec.z);
 	}
 	this.rotate = function(vec, vect) {
 		var rotXX = rotX(vec.x);
@@ -102,15 +156,15 @@ function update() {
 			if (!(isNaN(vecA.x) || isNaN(vecA.y) || isNaN(vecA.z))){
 				for (var i = 0; i < vertices.length; ++i) {
 					vertices[i] = vertices[i].rotate(vecT, vecA);
-				}				
-			}		
+				}
+			}
 		}
 	}
 }
 function drawScene() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	drawPlane();
-	drawAxis();	
+	drawAxis();
 	for (var i = 0; i < edges.length; ++i) {
 		drawEdge(edges[i]);
 	}
@@ -144,7 +198,7 @@ function startCanvas() {
 	$("x").select();
 	xAxis = [
 		new vec4(-canvas.width / 2, 0, 0),
-		new vec4(canvas.width / 2, 0, 0)		
+		new vec4(canvas.width / 2, 0, 0)
 	];
 	yAxis = [
 		new vec4(0, -canvas.width / 2, 0),
@@ -173,7 +227,7 @@ function addVertice(vec4, norm) {
 		if (verticeStatus == 0) {
 			alert("This vertice already exists!");
 		} else {
-			alert("Invalid input!");	
+			alert("Invalid input!");
 		}
 	}
 	$("x").select();
@@ -193,13 +247,13 @@ function addEdge(vA, vB) {
 	var edge = [vA, vB];
 	var edgeStatus = validadeEdges(edge);
 	if (edgeStatus == 1) {
-		edges.push(edge);		
+		edges.push(edge);
 		divEdges.innerHTML += (edges.length - 1) + ": (" + edge[0] + ", " + edge[1] + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deleteEdge(" + (edges.length - 1) + ")\"/><br>";
 	} else {
 		if (edgeStatus == 0) {
 			alert("This edge already exists!");
 		} else {
-			alert("Invalid input!");	
+			alert("Invalid input!");
 		}
 	}
 	$("vA").select();
@@ -270,7 +324,7 @@ function execOp(op) {
 			$("yT").value = parseFloat($("yT").value) * -1;
 			$("zT").value =  parseFloat($("zT").value) * -1;
 			break;
-	
+
 	}
 }
 function getPosition(event){
@@ -279,25 +333,25 @@ function getPosition(event){
     var y = event.clientY - rect.top; // y == the location of the click in the document - the location (relative to the top) of the canvas in the document
     addVertice(new vec4(x, y, 0), true);
 }
-function drawCoordinates(vertice, i){    
-    ctx.fillStyle = "#000000"; 
-    ctx.beginPath(); 
+function drawCoordinates(vertice, i){
+    ctx.fillStyle = "#000000";
+    ctx.beginPath();
 	var pixelVertice = normalize(vertice);
-    ctx.arc(pixelVertice.x, pixelVertice.y, pointSize, 0, Math.PI * 2, true); 
+	ctx.arc(pixelVertice.x , pixelVertice.y , pointSize, 0, Math.PI * 2, true);
 	ctx.font = "10px Arial";
 	ctx.fillText(i, pixelVertice.x + 10, pixelVertice.y);
-    ctx.fill(); 
-	ctx.closePath(); 
+    ctx.fill();
+	ctx.closePath();
 }
 function normalize(worldCoordinates) {
-	return new vec4(worldCoordinates.x + canvas.width / 2,  canvas.height / 2 - worldCoordinates.y, pointSize, 0);
+	return new vec4(worldCoordinates.x / worldCoordinates.w + canvas.width / 2,  canvas.height / 2 - worldCoordinates.y / worldCoordinates.w, pointSize, worldCoordinates.w);
 }
 function worldCoordinates(vertice) {
-	return new vec4(vertice.x - canvas.width / 2, canvas.height / 2 - vertice.y, 0);
+	return new vec4(vertice.x - canvas.width / 2, canvas.height / 2 - vertice.y, worldCoordinates.w);
 }
 function drawLine(a, b, dash, color) {
 	ctx.beginPath();
-	ctx.strokeStyle = color;	
+	ctx.strokeStyle = color;
 	ctx.setLineDash(dash);
 	ctx.moveTo(a.x, a.y);
 	ctx.lineTo(b.x, b.y);
@@ -305,20 +359,37 @@ function drawLine(a, b, dash, color) {
 	ctx.closePath();
 }
 function calcProjection(ver) {
-	var projMatrix;
+	projMatrix = [];
+	var isProjection = false;
 	if ($("iso").checked) {
 		projMatrix = isoMatrix
 	} else if ($("dim").checked) {
 		projMatrix = dimMatrix
 	} else if ($("tri").checked) {
 		projMatrix = triMatrix
+	} else {
+		var dx  = parseFloat($("xP").value);
+		var dy  = parseFloat($("yP").value);
+		var dz  = parseFloat($("zP").value);
+		isProjection = true;
+		if ($("xy").checked) {
+			projMatrix = matmult(perZ(-dx, -dy, 0, 1), matmult(perZ(0, 0, 1.0/dz, 0), perZ(dx, dy, 0, 1)));
+		} else if ($("xz").checked) {
+			projMatrix = matmult(matmult(matmult(matmult(perY(-dx, 0, -dz, 1), matmult(perY(0, 1/dy, 0, 0), perY(dx, 0, dz, 1))), tranMatrix(-dx, -dy, -dz)), rotX(90)), tranMatrix(dx, dy, dz));
+		} else if($("yz").checked) {
+			projMatrix = matmult(matmult(matmult(matmult(perX(0, -dy, -dz, 1), matmult(perX(1.0/dx, 0, 0, 0), perX(0, dy, dz, 1))), tranMatrix(-dx, -dy, -dz)), rotY(-90)), tranMatrix(dx, dy, dz));
+		}
 	}
-	return (new vec4()).copyArray(matmult(projMatrix, ver.getMat4()));
+	if (!isProjection) {
+		return (new vec4()).copyArray(matmult(projMatrix, ver.getMat4()));
+	} else {
+		return (new vec4()).copyVec(matmult(ver.getVec4(), projMatrix));
+	}
 }
 function drawPlane() {
 	var tmp = [];
 	for (var i = 0; i < xzPlane.length; ++i) {
-		tmp[i] = normalize(calcProjection(xzPlane[i])); 
+		tmp[i] = normalize(calcProjection(xzPlane[i]));
 	}
 	ctx.fillStyle = "#d3d3d3";
 	ctx.beginPath();
@@ -337,7 +408,7 @@ function drawEdge(edge) {
 function drawAxis() {
 	drawLine(normalize(calcProjection(xAxis[0])), normalize(calcProjection(xAxis[1])), [5, 3], "#0000ff");
 	drawLine(normalize(calcProjection(yAxis[0])), normalize(calcProjection(yAxis[1])), [5, 3], "#00ff00");
-	drawLine(normalize(calcProjection(zAxis[0])), normalize(calcProjection(zAxis[1])), [5, 3], "#ff0000");		
+	drawLine(normalize(calcProjection(zAxis[0])), normalize(calcProjection(zAxis[1])), [5, 3], "#ff0000");
 }
 function toRadians (angle) {
 	return angle * (Math.PI / 180);

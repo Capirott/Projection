@@ -39,10 +39,10 @@
 		<input style="float: right;" type="button" value="Delete all edges" onclick="deleteAllEdges();"/>
 	</fieldset>
 </div>
-<div style="float: right; width: 300px;">
+<div style="float: left; width: 300px;">
 	<fieldset>
 		<legend>Transformations</legend>
-		<fieldset> 
+		<fieldset>
 			<legend>Anchor point rotations</legend>
 			<label for="xA">X: </label>
 			<input type="number" id="xA" value="0"/><br>
@@ -51,7 +51,7 @@
 			<label for="zA">Z: </label>
 			<input type="number" id="zA" value="0"/><br>
 		</fieldset>
-		<fieldset> 
+		<fieldset>
 			<legend>Operation Values</legend>
 			<label for="xT">X: </label>
 			<input type="number" id="xT" value="0"/><br>
@@ -64,10 +64,10 @@
 		<input type="button" value="Translate" onclick="execOp(2);"/>
 		<input type="button" value="Scale" onclick="execOp(3);"/>
 		<input type="button" value="Negative" onclick="execOp(4);"/><br>
-		<label for="rotate">Rotate?</label><input type="checkbox" id="rotate" checked=true/>
+		<label for="rotate">Rotate?</label><input type="checkbox" id="rotate"/>
 	</fieldset>
 	<div style="float: left; width: 300px;">
-	<fieldset>		
+	<fieldset>
 		<legend>Projections</legend>
 		<fieldset>
 			<legend>Axonometrics</legend>
@@ -80,15 +80,24 @@
 		</fieldset>
 		<legend>Projections</legend>
 		<fieldset>
-			<!-- <legend>Perspective</legend> -->
-			<!-- <label for="dim">x</label> -->
-			<!-- <input type="radio" name="proj" id="dima"/> <br> -->
-			<!-- <label for="iso">Isometric</label> -->
-			<!-- <input type="radio" name="proj" id="isoa"/> <br> -->
-			<!-- <label for="tri">Trimetric</label> -->
-			<!-- <input type="radio" name="proj" id="tria"/> <br> -->
+			<fieldset>
+			<legend>Operation Values</legend>
+			<label for="xT">X: </label>
+			<input type="number" id="xP" value="10"/><br>
+			<label for="yT">Y: </label>
+			<input type="number" id="yP" value="10"/><br>
+			<label for="zT">Z: </label>
+			<input type="number" id="zP" value="10"/><br>
 		</fieldset>
-	</fieldset>	
+		<label for="xy">XY PLANE</label>
+		<input type="radio" name="proj" id="xy"/> <br>
+		<label for="xz">XZ PLANE</label>
+		<input type="radio" name="proj" id="xz"/> <br>
+		<label for="yz">YZ PLANE</label>
+		<input type="radio" name="proj" id="yz"/> <br>
+		</fieldset>
+		</fieldset>
+	</fieldset>
 </div>
 </div>
 </body>
