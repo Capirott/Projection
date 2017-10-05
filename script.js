@@ -222,7 +222,7 @@ function addVertice(vec4, norm) {
 	var verticeStatus = validateVertice(vertice);
 	if (verticeStatus == 1) {
 		vertices.push(vertice);
-		divVertices.innerHTML += (vertices.length - 1) + ": ( " + vertice.x + ", " + vertice.y + ", " + vertice.z + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deletePoint(" + (vertices.length - 1) + ")\"/><br>";
+		divVertices.innerHTML += (vertices.length - 1) + ": (" + vertice.x + ", " + vertice.y + ", " + vertice.z + ")<br>";
 	} else {
 		if (verticeStatus == 0) {
 			alert("This vertice already exists!");
@@ -248,7 +248,7 @@ function addEdge(vA, vB) {
 	var edgeStatus = validadeEdges(edge);
 	if (edgeStatus == 1) {
 		edges.push(edge);
-		divEdges.innerHTML += (edges.length - 1) + ": (" + edge[0] + ", " + edge[1] + ")" + "<input type=\"button\" value=\"Delete\" onclick=\"deleteEdge(" + (edges.length - 1) + ")\"/><br>";
+		divEdges.innerHTML += (edges.length - 1) + ": (" + edge[0] + ", " + edge[1] + ")<br>";
 	} else {
 		if (edgeStatus == 0) {
 			alert("This edge already exists!");
